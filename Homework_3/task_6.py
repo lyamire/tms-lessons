@@ -14,7 +14,7 @@ months = {"January": 31,
 month = input("Введите месяц: ").capitalize()
 day = int(input("Введите день: "))
 
-days_in_month = months[month]
-result = day <= days_in_month
+days_in_month = months.get(month, 0)
+is_day_exist = day <= days_in_month
 
-print(result)
+print(is_day_exist)

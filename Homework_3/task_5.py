@@ -13,5 +13,5 @@ months = {"January": 31,
 
 month = input("Введите название месяца: ").capitalize()
 
-print(f"Месяц {month}, количество дней {months[month]}")
+print(f"Месяц {month}, количество дней {months.get(month)}")
 
