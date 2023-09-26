@@ -6,6 +6,7 @@ while not solved:
     entered_number = int(input("Введите число от 1 до 5: "))
     if entered_number == number:
         print("Поздравляю, Вы угадали число")
+        solved = True
     else:
         print("Вы не угадали, попробуйте еще раз ")
 
