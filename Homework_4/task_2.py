@@ -1,7 +1,4 @@
-import random
-
-while True:
-    number = random.randint(0,100)
+for number in range(0, 101):
     print(number)
     answer = input("Should we break? ")
     if answer == "yes":
