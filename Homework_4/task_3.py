@@ -1,11 +1,17 @@
 import random
 
-number = random.randint(0,100)
+answered = False
 
-while True:
+while not answered:
+    number = random.randint(0, 100)
     print(number)
-    answer = input("Should we break? ")
-    if answer == "yes":
-        break
-    elif answer != "yes" or answer != "no":
+
+    while True:
+        answer = input("Should we break? ")
+        if answer == "yes":
+            answered = True
+            break
+        elif answer == "no":
+            break
+
         print("Don't understand you")
