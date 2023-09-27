@@ -10,4 +10,3 @@ while True:
         print("не угадал, число больше загаданного")
     elif entered_number < number:
         print("не угадал, число меньше загаданного")
-
