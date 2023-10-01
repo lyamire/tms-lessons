@@ -21,8 +21,5 @@ def get_most_frequent_word(text: str) -> str:
 
 assert (get_most_frequent_word("hello this is a string with words and spaces and big big woooooooooord and and and")
         == "and")
-assert (get_most_frequent_word("hello this is a string with words and spaces and big big woooooooooord and and and")
-        != "woooooooooord")
 assert get_most_frequent_word("All the world is made of faith and trust and pixie dust") == "and"
-assert get_most_frequent_word("All the world is made of faith and trust and pixie dust") != "is"
 

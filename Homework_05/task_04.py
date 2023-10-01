@@ -13,8 +13,6 @@ def get_longest_word(text: str) -> str:
 
 
 assert get_longest_word("The only thing in life achieved without effort is failure") == "achieved"
-assert get_longest_word("The only thing in life achieved without effort is failure") != "failure"
 assert get_longest_word("Too many of us are not living our dreams because we are living our fears") == "because"
-assert get_longest_word("Too many of us are not living our dreams because we are living our fears") != "living"
 assert get_longest_word("") == ""
 

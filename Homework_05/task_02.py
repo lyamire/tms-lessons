@@ -10,6 +10,4 @@ def generate_natural_cubes(n: int) -> list[int]:
 
 
 assert generate_natural_cubes(9) == [1, 8, 27, 64, 125, 216, 343, 512, 729]
-assert generate_natural_cubes(9) != [1, 9, 26, 64, 105, 216, 353, 512, 729]
 assert generate_natural_cubes(0) == []
-assert generate_natural_cubes(0) != [1]
