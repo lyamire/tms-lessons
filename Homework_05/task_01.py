@@ -11,6 +11,9 @@ def is_year_leap(year: int) -> bool:
     else:
         return False
 
+# def is_year_leap(year: int) -> bool:
+#    return (year % 4 == 0 and year % 100 != 0) or year % 400 == 0
+
 
 assert is_year_leap(2004)
 assert is_year_leap(2020)
