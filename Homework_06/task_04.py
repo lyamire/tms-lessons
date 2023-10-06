@@ -18,6 +18,6 @@ assert my_join("test test".split(), "*") == "test*test"
 
 
 lst = input("Enter words with a space: ").split()
-sep = input("Enter a symbol to separate: ")
+symbol_to_separate = input("Enter a symbol to separate: ")
 
-print(my_join(lst, sep))
+print(my_join(lst, symbol_to_separate))
