@@ -4,25 +4,11 @@
 пользователь вводит число от 1 до 5, в зависимости от выбранного номера запросите у пользователя входные данные
 для задачи (если это нужно) и выведите ответ.
 """
-
-def hello_world():
-    print('Hello world!')
-
-
-def my_sum(x, y):
-    return x + y
-
-
-def simple_compare(x, y) -> bool:
-    return True if x < y else False
-
-
-def compare(x, y) -> int:
-    return -1 if x < y else 1 if x > y else 0
-
-
-def filter_negative_numbers(list_n: list) -> list:
-    return [i for i in list_n if i >= 0]
+from task_01 import hello_world
+from task_02 import my_sum
+from task_03 import simple_compare
+from task_04 import compare
+from task_05 import filter_negative_numbers
 
 
 def input_two_numbers():

@@ -6,6 +6,7 @@ def hello_world():
     print('Hello world!')
 
 
-hello_world()
-hello_world()
-hello_world()
+if __name__ == '__main__':
+    hello_world()
+    hello_world()
+    hello_world()
