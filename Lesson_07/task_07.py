@@ -1,9 +1,9 @@
 import csv
 
 header = ('name', 'surname', 'age')
-name = input("Name: ").strip()
-surname = input("Surname: ").strip()
-age = input("Age: ").strip()
+name = input("Name: ")
+surname = input("Surname: ")
+age = input("Age: ")
 data = [name, surname, age]
 
 with open('file_07.csv', 'w') as file:
