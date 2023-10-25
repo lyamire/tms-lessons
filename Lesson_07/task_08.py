@@ -1,6 +1,6 @@
 import csv
 
-with open('file_07.txt', 'r') as file:
+with open('file_07.csv', 'r') as file:
     file_reader = csv.reader(file, delimiter=',')
     next(file_reader)
     for row in file_reader:
