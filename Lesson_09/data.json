@@ -1,0 +1,20 @@
+[
+  {
+    "card_holder": "SCROOGE MCDUCK",
+    "money": 1000000000600,
+    "card_number": "5113856615460291",
+    "account_number": "28426409141063499921"
+  },
+  {
+    "card_holder": "WILLY WONKA",
+    "money": 6666666000,
+    "card_number": "8093564338174615",
+    "account_number": "32531793034920199388"
+  },
+  {
+    "card_holder": "CRUELLA DE VIL",
+    "money": 666000000700,
+    "card_number": "1812612516995352",
+    "account_number": "39839553993052474340"
+  }
+]
