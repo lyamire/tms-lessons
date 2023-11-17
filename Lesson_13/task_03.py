@@ -1,6 +1,7 @@
 import sqlite3
 
-def find_user(min_age: int):
+def find_user():
+    min_age = int(input('Введите минимальный возраст: '))
     with sqlite3.connect('sqlite.db') as connection:
         result = connection.execute('SELECT first_name, last_name, age, country '
                                     'FROM user WHERE age > ? ORDER BY age;',
@@ -9,5 +10,5 @@ def find_user(min_age: int):
             print(p)
 
 
-min_age = int(input('Введите минимальный возраст: '))
-find_user(min_age)
+if __name__ == "__main__":
+    find_user()
