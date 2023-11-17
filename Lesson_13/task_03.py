@@ -9,5 +9,5 @@ def find_user(min_age: int):
             print(p)
 
 
-find_user(118)
-
+min_age = int(input('Введите минимальный возраст: '))
+find_user(min_age)
