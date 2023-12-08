@@ -1,1 +1,3 @@
 Flask~=3.0.0
+flask_session
+Django==4.2.7
