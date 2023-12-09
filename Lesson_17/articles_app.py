@@ -18,6 +18,17 @@ class Article:
     author: str
     like_count: int
 
+@dataclass
+class Account:
+    id: int
+    name: str
+    password: str
+
+@dataclass
+class Favorites:
+    article_id: int
+    user_id: int
+
 def get_all_articles() -> list[Article]:
     with sqlite3.connect(DATABASE_FILE) as connection:
         execution_result = connection.execute('SELECT id, title, text, author, like_count FROM article')
@@ -35,13 +46,61 @@ def get_article(article_id: int) -> Article:
 def save_article(article: Article):
     with sqlite3.connect(DATABASE_FILE) as connection:
         data = (article.title, article.text, article.author, article.like_count, article.id)
-        connection.execute('UPDATE article '
-                               ' SET title = ?, text = ?, author = ?, like_count = ?'
-                               ' WHERE id = ?', data)
+        connection.execute('UPDATE article SET title = ?, text = ?, author = ?, like_count = ? WHERE id = ?', data)
 
+def get_user(login: str) -> Account | None:
+    with sqlite3.connect(DATABASE_FILE) as connection:
+        execution_result = connection.execute('SELECT id, name, password FROM user WHERE name = ?',
+                                              (login,))
+        row = execution_result.fetchall()
+        if len(row) > 1:
+            raise ValueError(f'Expected 1 object with name {login}, got {len(row)}')
+        elif len(row) == 0:
+            return None
+        return Account(*row[0])
+
+def create_user(username: str, password: str) -> int:
+    with sqlite3.connect(DATABASE_FILE) as connection:
+        acc = get_user(username)
+        if acc is None:
+            cursor = connection.execute('INSERT INTO user (name, password) VALUES (?,?)', [username, password])
+            return cursor.lastrowid  # последний добавленный account_id
+        raise Exception
+
+def like_article_for_user(article_id: int, user_id: int):
+    article = get_article(article_id)
+
+    with sqlite3.connect(DATABASE_FILE) as connection:
+        execution_result = connection.execute(
+            'SELECT article_id, user_id FROM favorite_articles WHERE article_id = ? and user_id = ?',
+            [article_id, user_id])
+        row = execution_result.fetchall()
+        if len(row) > 0:
+            article.like_count -= 1
+            execution_result = connection.execute(
+                'delete from favorite_articles WHERE article_id = ? and user_id = ?',
+                [article_id, user_id])
+        else:
+            article.like_count += 1
+            execution_result = connection.execute(
+                'insert into favorite_articles (article_id, user_id) values (?, ?)',
+                [article_id, user_id])
+
+    save_article(article)
+
+
+def check_auth(func):
+    def wrapper(*args, **kwargs):
+        if not session.get('is_authenticated'):
+            return redirect(f'/auth')
+        return func(*args, **kwargs)
+
+    wrapper.__name__ = func.__name__
+    return wrapper
 
 @app.route('/')
 @app.route('/articles')
+@check_auth
 def articles_view():
     articles = get_all_articles()
     articles_html = '\n'.join(f'<li><a href="/article/{article.id}">{article.title}</a></li>' for article in articles)
@@ -49,10 +108,10 @@ def articles_view():
     return f'''
         <html>
             <head>
-                <title>Articles APP</title>
+                <title>Articles</title>
             </head>
             <body>
-                <h1>All Articles</h1>
+                <h1>Статьи</h1>
                 <ul>
                     {articles_html}
                 </ul>
@@ -61,6 +120,7 @@ def articles_view():
         '''
 
 @app.route('/article/<int:id>')
+@check_auth
 def article_view(id: int):
     try:
         article = get_article(id)
@@ -69,7 +129,7 @@ def article_view(id: int):
     return f'''
         <html>
             <head>
-                <title>Articles APP</title>
+                <title>Articles</title>
             </head>
             <body>
                 <a href="/articles">Go to home page</a>
@@ -77,27 +137,75 @@ def article_view(id: int):
                 <h3>{article.author}</h3>
                 <p>{article.text}</p>
                 <p>like count: {article.like_count}</p>
-                <form method="post" action="/article/like" >
-                    <input type="hidden" value="{article.id}" name="article_id"/>
+                <form method="post" action="/api/article/like">
+                    <input type="hidden" value="{article.id}" name="article_id">
                     <input type="submit" value="Like">
                 </form>
             </body>
         </html>
         '''
 
-@app.route('/article/like', methods=['POST'])
+@app.route('/api/article/like', methods=['POST'])
+@check_auth
 def like_article():
     article_id = int(request.form['article_id'])
-    article = get_article(article_id)
-    liked_articles = session.setdefault('liked_articles', set())
-    if article.id in liked_articles:
-        article.like_count -= 1
-        liked_articles.remove(article.id)
-    else:
-        article.like_count += 1
-        liked_articles.add(article.id)
-    save_article(article)
-    return redirect(f'/article/{article.id}')
+    user_id = int(session.get('user_id'))
+
+    like_article_for_user(article_id, user_id)
+
+    return redirect(f'/article/{article_id}')
+
+@app.route('/auth')
+def auth_view():
+    return f'''
+    <h2>Авторизация</h2>
+    <form action="/api/auth" method="post">
+        Login <input type="text" name="login"></br>
+        Password <input type="password" name="password"></br>
+        <input type="submit" value="Sign in">
+    </form>
+    <a href="register">Registration</a>
+    '''
+
+@app.route('/api/auth', methods=['POST'])
+def authenticate():
+    try:
+        username = request.form['login']
+        password = request.form['password']
+        acc = get_user(username)
+        if acc and acc.password == password:
+            session['is_authenticated'] = True
+            session['user_id'] = acc.id
+            return redirect('/')
+        else:
+            raise Exception('Ошибка авторизации')
+    except Exception:
+        return redirect('/error_auth')
+
+@app.route('/error_auth')
+def error_auth_view():
+    return f'Ошибка авторизации. <a href="/auth">Попробуйте снова</a>'
+
+@app.route('/register')
+def register_view():
+    return f'''
+    <h2>Регистрация</h2>
+    <form action="/api/register" method="post">
+        Login <input type="text" name="login"></br>
+        Password <input type="password" name="password"></br>
+        <input type="submit" value="Sign in">
+    </form>
+    <a href="/auth">Authorize</a>
+    '''
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    username = request.form['login']
+    password = request.form['password']
+    account_id = create_user(username, password)
+    session['is_authenticated'] = True
+    session['user_id'] = account_id
+    return redirect('/')
 
 
 if __name__ == '__main__':
