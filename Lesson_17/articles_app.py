@@ -98,6 +98,25 @@ def check_auth(func):
     wrapper.__name__ = func.__name__
     return wrapper
 
+def render_page(title: str, content: str) -> str:
+    has_auth = bool(session.get('is_authenticated'))
+    return f'''
+        <html>
+            <head>
+                <title>{title}</title>
+            </head>
+            <body>
+            <div class="menu" style="text-align: right;">
+                {'<span><a href="/logout">Logout</a></span>' if has_auth else ''}
+            </div>
+            <span><h1>{title}</h1></span>
+                <ul>
+                    {content}
+                </ul>
+            </body>
+        </html>
+        '''
+
 @app.route('/')
 @app.route('/articles')
 @check_auth
@@ -105,19 +124,7 @@ def articles_view():
     articles = get_all_articles()
     articles_html = '\n'.join(f'<li><a href="/article/{article.id}">{article.title}</a></li>' for article in articles)
 
-    return f'''
-        <html>
-            <head>
-                <title>Articles</title>
-            </head>
-            <body>
-                <h1>Статьи</h1>
-                <ul>
-                    {articles_html}
-                </ul>
-            </body>
-        </html>
-        '''
+    return render_page('Articles', articles_html)
 
 @app.route('/article/<int:id>')
 @check_auth
@@ -126,24 +133,15 @@ def article_view(id: int):
         article = get_article(id)
     except ValueError as e:
         abort(404, e)
-    return f'''
-        <html>
-            <head>
-                <title>Articles</title>
-            </head>
-            <body>
-                <a href="/articles">Go to home page</a>
-                <h1>{article.title}</h1>
-                <h3>{article.author}</h3>
+    content = f'''<h3>{article.author}</h3>
                 <p>{article.text}</p>
                 <p>like count: {article.like_count}</p>
                 <form method="post" action="/api/article/like">
                     <input type="hidden" value="{article.id}" name="article_id">
                     <input type="submit" value="Like">
                 </form>
-            </body>
-        </html>
-        '''
+                <a href="/articles">Go to home page</a>'''
+    return render_page(article.title, content)
 
 @app.route('/api/article/like', methods=['POST'])
 @check_auth
@@ -157,8 +155,7 @@ def like_article():
 
 @app.route('/auth')
 def auth_view():
-    return f'''
-    <h2>Авторизация</h2>
+    content = f'''
     <form action="/api/auth" method="post">
         Login <input type="text" name="login"></br>
         Password <input type="password" name="password"></br>
@@ -166,6 +163,7 @@ def auth_view():
     </form>
     <a href="register">Registration</a>
     '''
+    return render_page('Authorization', content)
 
 @app.route('/api/auth', methods=['POST'])
 def authenticate():
@@ -184,19 +182,19 @@ def authenticate():
 
 @app.route('/error_auth')
 def error_auth_view():
-    return f'Ошибка авторизации. <a href="/auth">Попробуйте снова</a>'
+    return render_page('Authorization error', f'Ошибка авторизации. <a href="/auth">Попробуйте снова</a>')
 
 @app.route('/register')
 def register_view():
-    return f'''
-    <h2>Регистрация</h2>
+    content = f'''
     <form action="/api/register" method="post">
         Login <input type="text" name="login"></br>
         Password <input type="password" name="password"></br>
-        <input type="submit" value="Sign in">
+        <input type="submit" value="Sign up">
     </form>
-    <a href="/auth">Authorize</a>
+    <a href="/auth">Authorization</a>
     '''
+    return render_page('Registration', content)
 
 @app.route('/api/register', methods=['POST'])
 def register():
@@ -205,6 +203,12 @@ def register():
     account_id = create_user(username, password)
     session['is_authenticated'] = True
     session['user_id'] = account_id
+    return redirect('/')
+
+@app.route('/logout')
+def logout():
+    session['is_authenticated'] = None
+    session['user_id'] = None
     return redirect('/')
 
 
