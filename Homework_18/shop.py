@@ -127,7 +127,7 @@ class Shop:
         with sqlite3.connect(self.__filename) as connection:
             response = connection.execute('SELECT id, login, password FROM user WHERE login = ?', (login, ))
             row = response.fetchall()
-            if len(row) == 1:
+            if len(row) > 1:
                 raise ValueError(f'Expected 1 object with name = {login}, got {len(row)}')
             elif len(row) == 0:
                 return None
@@ -173,48 +173,41 @@ def check_auth(func):
     wrapper.__name__ = func.__name__
     return wrapper
 
+def render_page(title: str, content: str) -> str:
+    has_auth = bool(session.get('is_authenticated'))
+    return f'''
+        <html>
+            <head>
+                <title>{title}</title>
+            </head>
+            <body>
+            <div class="menu" style="text-align: right;">
+                {'<span><a href="/logout">Logout</a></span>' if has_auth else ''}
+            </div>
+            <h1><a href="/">Go to main page</a></h1>
+            <h1><a href="/products/favorites">Go to favorite products page</a></h1>
+            <span><h1>{title}</h1></span>
+                <ul>
+                    {content}
+                </ul>
+            </body>
+        </html>
+        '''
 
 @app.route('/products')
 @check_auth
 def all_products_view():
     products = my_shop.get_products()
     products_html = generate_products_list_html(products)
-    return f'''
-    <html>
-    <head>
-        <title>Shop</title>
-    </head>
-    <body>
-        <h1><a href="/">Go to main page</a></h1>
-        <h1><a href="/products/favorites">Go to favorite products page</a></h1>
-        <h1>Products</h1>
-        {products_html}
-    </body>
-    </html>
-    '''
+    return render_page('Products', products_html)
 
 @app.route('/products/favorites')
 @check_auth
 def favorites_view():
-    # products = my_shop.load_products()
-    # favorites_products = session.setdefault('favorites_products', set())
-    # favorite_products = filter(lambda x: x.id in favorites_products, products)
     user_id = int(session.get('user_id'))
     favorite_products = my_shop.load_favorite_products(user_id)
     products_html = generate_products_list_html(favorite_products)
-    return f'''
-        <html>
-        <head>
-            <title>Shop</title>
-        </head>
-        <body>
-            <h1><a href="/">Go to main page</a></h1>
-            <h1><a href="/products">Go to all products page</a></h1>
-            <h1>Favorite products</h1>
-            {products_html}
-        </body>
-        </html>
-        '''
+    return render_page('Favorites', products_html)
 
 def generate_products_list_html(products):
     products_html = '\n'.join(f'<li><a href="/product/{product.id}">{product.name}</a></li>' for product in products)
@@ -231,22 +224,13 @@ def product_view(id: int):
     except ValueError as e:
         abort(404, e)
 
-    return f'''
-            <html>
-                <head>
-                    <title>Product</title>
-                </head>
-                <body>
-                    <a href="/products">Go to home page</a>
-                    <h1>{product.name}</h1>
-                    <p>{product.description}</p>
-                    <p>{product.category}</p>
-                    <form method="post" action="/api/product/{product.id}/favorite">
-                        <input type="submit" value="{'Favorite &#10027' if is_favorite else 'Add to Favorite'}">
-                    </form>
-                </body>
-            </html>
-            '''
+    content = f'''<h1>{product.name}</h1>
+                  <p>{product.description}</p>
+                  <p>{product.category}</p>
+                  <form method="post" action="/api/product/{product.id}/favorite">
+                     <input type="submit" value="{'Favorite &#10027' if is_favorite else 'Add to Favorite'}">
+                  </form>'''
+    return render_page('Product', content)
 
 @app.route('/api/product/<int:product_id>/favorite', methods=['POST'])
 @check_auth
@@ -268,22 +252,10 @@ def main_page():
     categories = my_shop.load_categories()
     categories_html = '\n'.join(generate_category_html(category) for category in categories)
 
-    main_page_template = f'''
-    <html>
-    <head>
-        <title>Shop</title>
-    </head>
-    <body>
-        <h1><a href="/products">Go to all products page</a></h1>
-        <h1><a href="/products/favorites">Go to favorite products page</a></h1>
-        <h1>Main Page</h1>
-        <ul>
-            {categories_html}
-        </ul>
-    </body>
-    </html>
-    '''
-    return main_page_template
+    main_page_template = f'''<ul>
+                                {categories_html}
+                             </ul>'''
+    return render_page('Main page', main_page_template)
 
 @app.route('/category/<int:category_id>')
 @check_auth
@@ -291,20 +263,7 @@ def category_view(category_id: int):
     category = my_shop.get_category(category_id)
     category.products = my_shop.load_products_by_category(category_id)
     products_html = generate_products_list_html(category.products)
-    return f'''
-        <html>
-        <head>
-            <title>Shop</title>
-        </head>
-        <body>
-            <h1><a href="/">Go to main page</a></h1>
-            <h1><a href="/products">Go to all products page</a></h1>
-            <h1><a href="/favorite-products">Go to favorite products page</a></h1>
-            <h1>{category.name}</h1>
-            {products_html}
-        </body>
-        </html>
-        '''
+    return render_page(category.name, products_html)
 
 @app.route('/register')
 def register_view():
@@ -329,13 +288,14 @@ def register():
 @app.route('/auth')
 def auth_view():
     return f'''
-    <form action="/api/auth method="post">
+    <form action="/api/auth" method="POST">
         Login <input type="text" name="login"></br>
         Password <input type="password" name="password"></br>
         <input type="submit" value="Sign in">
     </form>
     <a href="register">Register</a>
     '''
+
 @app.route('/api/auth', methods=['POST'])
 def authenticate():
     try:
@@ -353,7 +313,7 @@ def authenticate():
 
 @app.route('/error_auth')
 def error_auth_view():
-    return f'Ошибка авторизации. <a href="/error_auth">Попробуйте снова</a>'
+    return f'Ошибка авторизации. <a href="/auth">Попробуйте снова</a>'
 
 @app.route('/logout')
 def logout():
