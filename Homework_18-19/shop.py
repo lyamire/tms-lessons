@@ -224,13 +224,12 @@ def product_view(id: int):
     except ValueError as e:
         abort(404, e)
 
-    content = f'''<h1>{product.name}</h1>
-                  <p>{product.description}</p>
+    content = f'''<p>{product.description}</p>
                   <p>{product.category}</p>
                   <form method="post" action="/api/product/{product.id}/favorite">
                      <input type="submit" value="{'Favorite &#10027' if is_favorite else 'Add to Favorite'}">
                   </form>'''
-    return render_page('Product', content)
+    return render_page(product.name, content)
 
 @app.route('/api/product/<int:product_id>/favorite', methods=['POST'])
 @check_auth
